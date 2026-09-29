@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Measured or generated? UC campus street in 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --concrete: #EEF1F3;
+    --ink: #1D2831;
+    --asphalt: #5E6A73;
+    --line: #C9D0D5;
+    --measured: #D9A300;   /* bollard yellow: real capture */
+    --generated: #6B5BD2;  /* AI generated */
+    --panel: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --concrete:#141A1F; --ink:#E6EBEE; --asphalt:#9AA6AE; --line:#2C363D; --panel:#1B2329; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--concrete); color: var(--ink);
+    font-family: "Source Serif 4", Georgia, serif; font-size: 18px; line-height: 1.6;
+  }
+  header, main, footer { max-width: 1320px; margin: 0 auto; padding: 0 24px; }
+  header { padding-top: 56px; padding-bottom: 32px; }
+  h1 {
+    font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; font-weight: 800;
+    font-size: clamp(40px, 7vw, 88px); line-height: 0.95; letter-spacing: -0.02em; margin: 0 0 20px;
+  }
+  .lede { max-width: 62ch; color: var(--asphalt); margin: 0; }
+  .viewers { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .viewer { background: var(--panel); border: 1px solid var(--line); display: flex; flex-direction: column; }
+  .viewer.measured { border-top: 6px solid var(--measured); }
+  .viewer.generated { border-top: 6px solid var(--generated); }
+  .viewer-head { padding: 16px 18px 12px; }
+  h2 { font-family: "Archivo", Arial, sans-serif; font-weight: 600; font-size: 22px; margin: 0 0 4px; }
+  .source { margin: 0; font-size: 16px; color: var(--asphalt); }
+  .frame { position: relative; aspect-ratio: 4 / 3; background: #0E1216; }
+  .frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .empty {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    padding: 24px; text-align: center; color: #C9D0D5; font-family: "Archivo", Arial, sans-serif; font-size: 16px;
+  }
+  .viewer-foot { padding: 12px 18px 16px; font-family: "Archivo", Arial, sans-serif; font-size: 15px; }
+  .viewer-foot a { color: var(--ink); font-weight: 600; }
+  a:focus-visible { outline: 3px solid var(--measured); outline-offset: 3px; }
+  section.facts { margin-top: 48px; }
+  h3 { font-family: "Archivo", Arial, sans-serif; font-weight: 600; font-size: 24px; margin: 0 0 12px; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 17px; background: var(--panel); }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: "Archivo", Arial, sans-serif; font-weight: 600; }
+  th.m { box-shadow: inset 0 -3px 0 var(--measured); }
+  th.g { box-shadow: inset 0 -3px 0 var(--generated); }
+  .note { max-width: 70ch; color: var(--asphalt); font-size: 16px; }
+  footer { padding-top: 40px; padding-bottom: 56px; font-size: 15px; color: var(--asphalt); }
+  @media (max-width: 860px) { .viewers { grid-template-columns: 1fr; } header { padding-top: 36px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Measured or generated?</h1>
+  <p class="lede">The same University of Canterbury street, rebuilt in 3D two ways. On the left, a 3D Gaussian Splatting model trained on a full bicycle pass with a 360° camera. On the right, a scene an AI tool generated from one frame of that video. Move around in both and see where they agree and where the AI had to guess.</p>
+</header>
+
+<main>
+  <div class="viewers">
+    <article class="viewer measured">
+      <div class="viewer-head">
+        <h2>Measured</h2>
+        <p class="source">Built from 328 real views along the route</p>
+      </div>
+      <div class="frame" id="frame-measured"></div>
+      <div class="viewer-foot"><a id="link-measured" href="#" target="_blank" rel="noopener">Open full screen</a></div>
+    </article>
+
+    <article class="viewer generated">
+      <div class="viewer-head">
+        <h2>Generated</h2>
+        <p class="source">Built by Marble (World Labs) from one 360° frame</p>
+      </div>
+      <div class="frame" id="frame-generated"></div>
+      <div class="viewer-foot"><a id="link-generated" href="#" target="_blank" rel="noopener">Open full screen</a></div>
+    </article>
+  </div>
+
+  <section class="facts">
+    <h3>What each model is built from</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th></th><th class="m">Measured</th><th class="g">Generated</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>Input</th><td>One bicycle pass, 6K 360° video, 164 frames kept</td><td>One 360° frame from the same pass</td></tr>
+          <tr><th>Camera</th><td colspan="2">Insta360 ONE RS 1-Inch 360, lenses facing both sides of the path</td></tr>
+          <tr><th>Processing</th><td>Left and right views, COLMAP alignment (328 of 328 views, 0.77 px error), trained in LichtFeld Studio</td><td>Marble world model</td></tr>
+          <tr><th>Reliable where</th><td>Along the route, looking to the sides</td><td>Close to the single capture point</td></tr>
+          <tr><th>Weak where</th><td>Far away and looking along the path</td><td>Anywhere the camera never saw</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Some floating noise was removed from the measured model in SuperSplat for display. Research comparisons use the unedited model.</p>
+  </section>
+</main>
+
+<footer>
+  Susan Chang, University of Canterbury. Captured 29 September 2026.
+</footer>
+
+<script>
+  // Paste your two links here.
+  const MEASURED_URL  = "https://superspl.at/s?id=53fdc9ea"; 
+  const GENERATED_URL = "https://marble.worldlabs.ai/world/f31b4c16-0b3a-4736-8031-8aea47fb22db";
+
+  function mount(frameId, linkId, url, emptyText) {
+    const frame = document.getElementById(frameId);
+    const link = document.getElementById(linkId);
+    if (!url) {
+      frame.innerHTML = '<div class="empty">' + emptyText + '</div>';
+      link.style.display = "none";
+      return;
+    }
+    const iframe = document.createElement("iframe");
+    iframe.src = url;
+    iframe.loading = "lazy";
+    iframe.allow = "fullscreen; xr-spatial-tracking";
+    iframe.title = frameId === "frame-measured" ? "Measured 3D model" : "Generated 3D scene";
+    frame.appendChild(iframe);
+    link.href = url;
+  }
+
+  mount("frame-measured", "link-measured", MEASURED_URL,
+        "Add the SuperSplat link to MEASURED_URL in index.html");
+  mount("frame-generated", "link-generated", GENERATED_URL,
+        "Add the Marble link to GENERATED_URL in index.html");
+</script>
+</body>
+</html>
